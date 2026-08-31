@@ -1,0 +1,33 @@
+name: Upload release asset
+description: Uploads a file to a GitHub release
+
+inputs:
+  tag:
+    description: Release tag name
+    required: true
+  file:
+    description: Path to the file to upload
+    required: true
+  repo:
+    description: GitHub repository (owner/repo)
+    required: false
+    default: ${{ github.repository }}
+  token:
+    description: GitHub token for authentication
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Upload asset to release
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        INPUT_TAG: ${{ inputs.tag }}
+        INPUT_FILE: ${{ inputs.file }}
+        INPUT_REPO: ${{ inputs.repo }}
+      shell: bash
+      run: |
+        gh release upload "${INPUT_TAG}" \
+          "${INPUT_FILE}" \
+          --repo "${INPUT_REPO}" \
+          --clobber

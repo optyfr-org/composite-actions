@@ -1,0 +1,27 @@
+name: Upload JaCoCo coverage report
+description: Uploads JaCoCo coverage report as an artifact
+
+inputs:
+  path:
+    description: Path to the JaCoCo report directory
+    required: false
+    default: build/reports/jacoco/
+  name:
+    description: Artifact name
+    required: false
+    default: jacoco-coverage-report
+  retention-days:
+    description: Artifact retention period in days
+    required: false
+    default: '30'
+
+runs:
+  using: composite
+  steps:
+    - name: Upload JaCoCo coverage report
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: ${{ inputs.name }}
+        path: ${{ inputs.path }}
+        retention-days: ${{ inputs.retention-days }}

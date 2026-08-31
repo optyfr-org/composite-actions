@@ -1,0 +1,33 @@
+name: Ensure GitHub release
+description: Creates a GitHub release if it does not already exist
+
+inputs:
+  tag:
+    description: Release tag name
+    required: true
+  repo:
+    description: GitHub repository (owner/repo)
+    required: false
+    default: ${{ github.repository }}
+  token:
+    description: GitHub token for authentication
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Create GitHub release if missing
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        INPUT_TAG: ${{ inputs.tag }}
+        INPUT_REPO: ${{ inputs.repo }}
+      shell: bash
+      run: |
+        if gh release view "${INPUT_TAG}" --repo "${INPUT_REPO}" >/dev/null 2>&1; then
+          echo "Release ${INPUT_TAG} already exists"
+        else
+          gh release create "${INPUT_TAG}" \
+            --repo "${INPUT_REPO}" \
+            --title "${INPUT_TAG}" \
+            --generate-notes
+        fi
