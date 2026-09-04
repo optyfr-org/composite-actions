@@ -1,0 +1,42 @@
+name: Setup JDK and Gradle
+description: Sets up JDK and Gradle
+
+inputs:
+  java-version:
+    description: Java version to use
+    required: false
+    default: '25'
+  java-distribution:
+    description: Java distribution to use
+    required: false
+    default: 'graalvm'
+  native:
+    description: Whether to install native-image for GraalVM
+    required: false
+    default: 'true'
+
+runs:
+  using: composite
+  steps:
+    - name: Set up ${{ inputs.java-distribution }} ${{ inputs.java-version }} JDK
+      if: ${{ inputs.native == 'false' }}
+      uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        cache: 'gradle'
+
+    - name: Set up ${{ inputs.java-distribution }} ${{ inputs.java-version }} JDK
+      if: ${{ inputs.native == 'true' }}
+      uses: graalvm/setup-graalvm@0426e2e191540e8514dff98dc52a5f5146a2a276 # v1.6.6
+      with:
+        distribution: ${{ inputs.java-distribution }}
+        java-version: ${{ inputs.java-version }}
+        native-image-musl: 'true'
+        native-image-job-reports: 'true'
+        native-image-enable-sbom: ${{ inputs.java-version == '25' }}
+
+
+    - name: Setup Gradle
+      if: ${{ inputs.native == 'true' }}
+      uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
