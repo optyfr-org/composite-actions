@@ -48,7 +48,9 @@ runs:
     - name: Prepare Docker context
       if: ${{ inputs.prepare-script != '' }}
       shell: bash
-      run: ${{ inputs.prepare-script }}
+      env:
+        PREPARE_SCRIPT: ${{ inputs.prepare-script }}
+      run: eval "$PREPARE_SCRIPT"
 
     - name: Docker meta
       id: meta
