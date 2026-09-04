@@ -1,0 +1,106 @@
+name: Docker build and push
+description: Prepares, tags, and pushes Docker images to Docker Hub, with optional hardened registry login
+
+inputs:
+  images:
+    description: Docker image name(s) to use as base for tags
+    required: true
+  tags:
+    description: Docker tag rules (docker/metadata-action syntax)
+    required: false
+    default: |
+      type=schedule
+      type=ref,event=branch
+      type=ref,event=tag
+      type=ref,event=pr
+  context:
+    description: Build context
+    required: false
+    default: '.'
+  platforms:
+    description: Target platforms
+    required: false
+    default: 'linux/amd64'
+  pull:
+    description: Always pull base images
+    required: false
+    default: 'true'
+  push:
+    description: Push result to the registry
+    required: false
+    default: 'true'
+  prepare-script:
+    description: Script to run before building (e.g. ./prep_docker.sh)
+    required: false
+    default: ''
+  registry:
+    description: Additional registry to log in to (e.g. dhi.io)
+    required: false
+    default: ''
+  registry-username:
+    description: Username for the additional registry
+    required: false
+    default: ''
+  registry-password:
+    description: Password or token for the additional registry
+    required: false
+    default: ''
+  dockerhub-username:
+    description: Docker Hub username
+    required: true
+  dockerhub-password:
+    description: Docker Hub password or token
+    required: true
+
+outputs:
+  tags:
+    description: Generated Docker tags
+    value: ${{ steps.meta.outputs.tags }}
+  labels:
+    description: Generated Docker labels
+    value: ${{ steps.meta.outputs.labels }}
+
+runs:
+  using: composite
+  steps:
+    - name: Prepare Docker context
+      if: ${{ inputs.prepare-script != '' }}
+      shell: bash
+      run: ${{ inputs.prepare-script }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5
+      with:
+        images: ${{ inputs.images }}
+        tags: ${{ inputs.tags }}
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+    - name: Login to hardened images registry
+      if: ${{ inputs.registry != '' }}
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ inputs.registry-username }}
+        password: ${{ inputs.registry-password }}
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+      with:
+        username: ${{ inputs.dockerhub-username }}
+        password: ${{ inputs.dockerhub-password }}
+
+    - name: Build and push
+      uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+      with:
+        context: ${{ inputs.context }}
+        pull: ${{ inputs.pull }}
+        push: ${{ inputs.push }}
+        platforms: ${{ inputs.platforms }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
