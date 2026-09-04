@@ -54,6 +54,18 @@ Uploads a file to a GitHub release.
 | `repo` | GitHub repository (owner/repo) | `${{ github.repository }}` |
 | `token` | GitHub token for authentication | *required* |
 
+### docker-login
+
+Logs in to an optional additional registry and to Docker Hub.
+
+| Input | Description | Default |
+|---|---|---|
+| `registry` | Additional registry to log in to (e.g. `dhi.io`) | `''` |
+| `registry-username` | Username for the additional registry | `''` |
+| `registry-password` | Password or token for the additional registry | `''` |
+| `dockerhub-username` | Docker Hub username | *required* |
+| `dockerhub-password` | Docker Hub password or token | *required* |
+
 ### setup-docker
 
 Sets up the Docker build environment (QEMU, Buildx) and logs in to registries. Call before `docker-build-push`.
