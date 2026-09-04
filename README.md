@@ -72,6 +72,8 @@ Sets up the Docker build environment (QEMU, Buildx) and logs in to registries. C
 
 | Input | Description | Default |
 |---|---|---|
+| `setup-qemu` | Whether to set up QEMU | `true` |
+| `setup-buildx` | Whether to set up Docker Buildx | `true` |
 | `registry` | Additional registry to log in to (e.g. `dhi.io`) | `''` |
 | `registry-username` | Username for the additional registry | `''` |
 | `registry-password` | Password or token for the additional registry | `''` |
