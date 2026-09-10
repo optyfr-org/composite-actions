@@ -1,12 +1,12 @@
 name: Upload release asset
-description: Uploads a file to a GitHub release
+description: Uploads files, or files matching a glob, to a GitHub release
 
 inputs:
   tag:
     description: Release tag name
     required: true
   file:
-    description: Path to the file to upload
+    description: Path or glob of the file(s) to upload
     required: true
   repo:
     description: GitHub repository (owner/repo)
@@ -27,7 +27,15 @@ runs:
         INPUT_REPO: ${{ inputs.repo }}
       shell: bash
       run: |
+        shopt -s nullglob globstar
+        files=()
+        IFS= files=(${INPUT_FILE})
+        if [ ${#files[@]} -eq 0 ]; then
+          echo "::error::No file matches '${INPUT_FILE}'"
+          exit 1
+        fi
+        printf 'Uploading %s\n' "${files[@]}"
         gh release upload "${INPUT_TAG}" \
-          "${INPUT_FILE}" \
+          "${files[@]}" \
           --repo "${INPUT_REPO}" \
           --clobber

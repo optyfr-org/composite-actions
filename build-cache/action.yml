@@ -13,6 +13,10 @@ inputs:
     description: Cache path(s)
     required: false
     default: build
+  enableCrossOsArchive:
+    description: Whether the cache can be saved or restored across operating systems
+    required: false
+    default: 'false'
 
 outputs:
   cache-hit:
@@ -29,6 +33,7 @@ runs:
       with:
         path: ${{ inputs.path }}
         key: ${{ inputs.cache-name }}-${{ github.sha }}
+        enableCrossOsArchive: ${{ inputs.enableCrossOsArchive }}
 
     - name: Save build cache
       if: inputs.mode == 'save'
@@ -36,3 +41,4 @@ runs:
       with:
         path: ${{ inputs.path }}
         key: ${{ inputs.cache-name }}-${{ github.sha }}
+        enableCrossOsArchive: ${{ inputs.enableCrossOsArchive }}

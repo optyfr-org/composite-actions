@@ -4,14 +4,15 @@ Shared GitHub Actions for optyfr-org repositories.
 
 ## Actions
 
-### setup-gradle
+### setup-java-gradle
 
-Sets up GraalVM JDK and Gradle.
+Sets up JDK and Gradle. With `native: false` it uses `actions/setup-java` with Gradle dependency caching; with `native: true` it uses `graalvm/setup-graalvm` with native-image support plus `gradle/actions/setup-gradle`. Also usable as `setup-gradle` via a symlink.
 
 | Input | Description | Default |
 |---|---|---|
 | `java-version` | Java version to use | `25` |
 | `java-distribution` | Java distribution to use | `graalvm` |
+| `native` | Whether to install native-image for GraalVM | `true` |
 
 ### build-cache
 
@@ -22,6 +23,7 @@ Saves or restores the build cache keyed by SHA.
 | `mode` | `save` or `restore` | *required* |
 | `cache-name` | Cache name prefix | `cache-builds` |
 | `path` | Cache path(s) | `build` |
+| `enableCrossOsArchive` | Whether the cache can be saved or restored across operating systems | `false` |
 
 ### upload-jacoco
 
@@ -45,12 +47,12 @@ Creates a GitHub release if it does not already exist.
 
 ### upload-release-asset
 
-Uploads a file to a GitHub release.
+Uploads files, or files matching a glob, to a GitHub release.
 
 | Input | Description | Default |
 |---|---|---|
 | `tag` | Release tag name | *required* |
-| `file` | Path to the file to upload | *required* |
+| `file` | Path or glob of the file(s) to upload | *required* |
 | `repo` | GitHub repository (owner/repo) | `${{ github.repository }}` |
 | `token` | GitHub token for authentication | *required* |
 
