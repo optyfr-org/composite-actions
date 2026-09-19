@@ -25,7 +25,10 @@ runs:
       shell: bash
       env:
         TAG: ${{ inputs.tag }}
+        REPO: ${{ inputs.repo }}
       run: |
+          echo "release_owner=${REPO%%/*}" >> $GITHUB_OUTPUT
+          echo "release_repo=${REPO#*/}" >> $GITHUB_OUTPUT
           if [ -n "${TAG}" ]; then
             channel="release"
             version="${TAG#v}"
@@ -55,35 +58,29 @@ runs:
     - name: Update Nightly release
       if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
       uses: 'ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd'
-      env:
-        GH_TOKEN: ${{ inputs.token }}
-        INPUT_TAG: ${{ inputs.tag }}
-        INPUT_FILE: ${{ inputs.file }}
-        INPUT_REPO: ${{ inputs.repo }}
       with:
-          prerelease: true
-          allowUpdates: true
-          removeArtifacts: true
-          replacesArtifacts: true
-          generateReleaseNotes: true
-          name: ${{ steps.setup.outputs.release_name }} # nightly-YYYYMMDD
-          tag: nightly
-          artifacts: ${INPUT_FILE}
-          repo: "${ INPUT_REPO }"
+        prerelease: true
+        allowUpdates: true
+        removeArtifacts: true
+        replacesArtifacts: true
+        generateReleaseNotes: true
+        name: ${{ steps.setup.outputs.release_name }}
+        tag: nightly
+        artifacts: ${{ inputs.file }}
+        owner: ${{ steps.setup.outputs.release_owner }}
+        repo: ${{ steps.setup.outputs.release_repo }}
+        token: ${{ inputs.token }}
 
     - name: "Release ${{ steps.setup.outputs.release_version }}"
       if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'release' }}
       uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd
-      env:
-        GH_TOKEN: ${{ inputs.token }}
-        INPUT_TAG: ${{ inputs.tag }}
-        INPUT_FILE: ${{ inputs.file }}
-        INPUT_REPO: ${{ inputs.repo }}
       with:
         draft: true
         prerelease: false
         makeLatest: true
         name: Release - ${{ steps.setup.outputs.release_version }}
         tag: ${{ steps.setup.outputs.release_name }}
-        artifacts: ${INPUT_FILE}
-        repo: "${ INPUT_REPO }"
+        artifacts: ${{ inputs.file }}
+        owner: ${{ steps.setup.outputs.release_owner }}
+        repo: ${{ steps.setup.outputs.release_repo }}
+        token: ${{ inputs.token }}
