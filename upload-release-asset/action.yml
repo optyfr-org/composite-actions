@@ -16,26 +16,70 @@ inputs:
     description: GitHub token for authentication
     required: true
 
+
 runs:
   using: composite
   steps:
-    - name: Upload asset to release
+    - name: Setup release name
+      id: setup
+      shell: bash
+      env:
+        TAG: ${{ inputs.tag }}
+      run: |
+          if [ -n "${TAG}" ]; then
+            channel="release"
+            version="${TAG#v}"
+
+            echo "create_release=false" >> $GITHUB_OUTPUT
+            echo "release_name=$channel-$version" >> $GITHUB_OUTPUT
+            echo "release_channel=$channel" >> $GITHUB_OUTPUT
+            echo "release_version=$version" >> $GITHUB_OUTPUT
+          else
+            channel="nightly"
+            version="$(date -u +%Y%m%d)"
+
+            echo "create_release=true" >> $GITHUB_OUTPUT
+            echo "release_name=$channel-$version" >> $GITHUB_OUTPUT
+            echo "release_channel=$channel" >> $GITHUB_OUTPUT
+            echo "release_version=$version" >> $GITHUB_OUTPUT
+          fi
+    - name: Update Nightly tag
+      uses: actions-ecosystem/action-push-tag@6e82caefe706f5a729e354df7443dc82f98a414f
+      if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
+      with:
+        tag: nightly
+
+    - name: Upload release asset
+      if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
+      uses: 'ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd'
       env:
         GH_TOKEN: ${{ inputs.token }}
         INPUT_TAG: ${{ inputs.tag }}
         INPUT_FILE: ${{ inputs.file }}
         INPUT_REPO: ${{ inputs.repo }}
-      shell: bash
-      run: |
-        shopt -s nullglob globstar
-        files=()
-        IFS= files=(${INPUT_FILE})
-        if [ ${#files[@]} -eq 0 ]; then
-          echo "::error::No file matches '${INPUT_FILE}'"
-          exit 1
-        fi
-        printf 'Uploading %s\n' "${files[@]}"
-        gh release upload "${INPUT_TAG}" \
-          "${files[@]}" \
-          --repo "${INPUT_REPO}" \
-          --clobber
+      with:
+          prerelease: true
+          allowUpdates: true
+          removeArtifacts: true
+          replacesArtifacts: true
+          generateReleaseNotes: true
+          name: ${{ steps.setup.outputs.release_name }} # nightly-YYYYMMDD
+          tag: nightly
+          artifacts: ${INPUT_FILE}
+          repo: "${ INPUT_REPO }"
+    - name: Release
+      uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd
+      if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'release' }}
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        INPUT_TAG: ${{ inputs.tag }}
+        INPUT_FILE: ${{ inputs.file }}
+        INPUT_REPO: ${{ inputs.repo }}
+      with:
+        draft: true
+        prerelease: false
+        makeLatest: true
+        name: Release - ${{ steps.setup.outputs.release_version }}
+        tag: ${{ steps.setup.outputs.release_name }}
+        artifacts: ${INPUT_FILE}
+        repo: "${ INPUT_REPO }"
