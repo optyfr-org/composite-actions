@@ -45,9 +45,11 @@ runs:
     - name: Update Nightly tag
       if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
       shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
       run: |
           git tag -f nightly
-          git push origin -f nightly
+          git push https://x-token-auth:${TOKEN}@://github.com{{ github.repository }}.git -f nightly
 
     - name: Update Nightly release
       if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
