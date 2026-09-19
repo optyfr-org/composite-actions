@@ -29,7 +29,6 @@ runs:
           if [ -n "${TAG}" ]; then
             channel="release"
             version="${TAG#v}"
-
             echo "create_release=false" >> $GITHUB_OUTPUT
             echo "release_name=$channel-$version" >> $GITHUB_OUTPUT
             echo "release_channel=$channel" >> $GITHUB_OUTPUT
@@ -37,19 +36,20 @@ runs:
           else
             channel="nightly"
             version="$(date -u +%Y%m%d)"
-
             echo "create_release=true" >> $GITHUB_OUTPUT
             echo "release_name=$channel-$version" >> $GITHUB_OUTPUT
             echo "release_channel=$channel" >> $GITHUB_OUTPUT
             echo "release_version=$version" >> $GITHUB_OUTPUT
           fi
-    - name: Update Nightly tag
-      uses: actions-ecosystem/action-push-tag@6e82caefe706f5a729e354df7443dc82f98a414f
-      if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
-      with:
-        tag: nightly
 
-    - name: Upload release asset
+    - name: Update Nightly tag
+      if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
+      shell: bash
+      run: |
+          git tag -f nightly
+          git push origin -f nightly
+
+    - name: Update Nightly release
       if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'nightly' }}
       uses: 'ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd'
       env:
@@ -67,9 +67,10 @@ runs:
           tag: nightly
           artifacts: ${INPUT_FILE}
           repo: "${ INPUT_REPO }"
-    - name: Release
-      uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd
+
+    - name: "Release ${{ steps.setup.outputs.release_version }}"
       if: ${{ steps.setup.outputs.create_release == 'true' && steps.setup.outputs.release_channel == 'release' }}
+      uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd
       env:
         GH_TOKEN: ${{ inputs.token }}
         INPUT_TAG: ${{ inputs.tag }}
