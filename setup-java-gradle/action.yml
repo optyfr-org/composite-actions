@@ -32,9 +32,9 @@ runs:
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
-        native-image-musl: 'true'
+        native-image-musl: ${{ runner.os == 'Linux' }}
         native-image-job-reports: 'true'
-        native-image-enable-sbom: ${{ inputs.java-version == '25' }}
+        native-image-enable-sbom: ${{ inputs.java-version == '25' && inputs.java-distribution == 'graalvm' }}
 
 
     - name: Setup Gradle
